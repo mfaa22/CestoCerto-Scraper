@@ -43,14 +43,18 @@ def scrape_prices(search_term):
     }
     return prices
 
-def update_product_in_db(product_id, prices_data):
-    """ Atualiza um produto na base de dados Firestore. """
+def update_product_in_db(product_id, search_term, prices_data):
+    """ Cria ou atualiza um produto na base de dados Firestore. """
     try:
         product_ref = db.collection('products').document(product_id)
-        product_ref.update({
+        # CORREÇÃO: Usamos .set(..., merge=True) em vez de .update()
+        # Isto cria o documento se ele não existir, e atualiza-o se já existir.
+        product_ref.set({
+            'id': product_id,
+            'name': search_term.title(), # Coloca a primeira letra maiúscula
             'prices': prices_data,
             'last_updated': firestore.SERVER_TIMESTAMP
-        })
+        }, merge=True)
         print(f"Produto '{product_id}' atualizado com sucesso na base de dados.")
     except Exception as e:
         print(f"ERRO ao atualizar o produto '{product_id}': {e}")
@@ -68,7 +72,7 @@ def run_scraper():
             {"supermarket": name, "price": price} for name, price in scraped_prices.items()
         ]
         
-        update_product_in_db(product['id'], updated_prices)
+        update_product_in_db(product['id'], product['search_term'], updated_prices)
 
     print("\n--- ATUALIZAÇÃO DE PREÇOS CONCLUÍDA ---")
 
