@@ -11,7 +11,7 @@ from datetime import datetime
 # Carrega a chave secreta para aceder à base de dados
 # Esta chave virá de um "Secret File" no Render
 try:
-    # CORREÇÃO: O nome da variável de ambiente no Render é o nome do ficheiro, em maiúsculas.
+    # O nome da variável de ambiente no Render é o nome do ficheiro, em maiúsculas.
     key_content = os.getenv('SERVICEACCOUNTKEY_JSON')
     if not key_content:
         raise ValueError("A variável de ambiente 'SERVICEACCOUNTKEY_JSON' não foi encontrada.")
