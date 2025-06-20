@@ -1,23 +1,19 @@
-import requests
-from bs4 import BeautifulSoup
 import firebase_admin
 from firebase_admin import credentials, firestore
 import os
-import json
 from datetime import datetime
 
 # --- Configuração Inicial ---
 
-# Carrega a chave secreta para aceder à base de dados
-# Esta chave virá de um "Secret File" no Render
+# CORREÇÃO: Vamos ler a chave diretamente do ficheiro, que é um método mais robusto no Render.
+SECRET_FILE_PATH = '/etc/secrets/serviceAccountKey.json'
+
 try:
-    # O nome da variável de ambiente no Render é o nome do ficheiro, em maiúsculas.
-    key_content = os.getenv('SERVICEACCOUNTKEY_JSON')
-    if not key_content:
-        raise ValueError("A variável de ambiente 'SERVICEACCOUNTKEY_JSON' não foi encontrada.")
-    
-    key_dict = json.loads(key_content)
-    cred = credentials.Certificate(key_dict)
+    # Verifica se o ficheiro da chave secreta existe
+    if not os.path.exists(SECRET_FILE_PATH):
+        raise FileNotFoundError(f"O ficheiro da chave secreta não foi encontrado em {SECRET_FILE_PATH}")
+
+    cred = credentials.Certificate(SECRET_FILE_PATH)
     
     # Evita inicializar a app múltiplas vezes se o script for chamado mais de uma vez
     if not firebase_admin._apps:
@@ -26,7 +22,7 @@ try:
     db = firestore.client()
     print("Ligação ao Firestore estabelecida com sucesso.")
 except Exception as e:
-    print(f"ERRO: Não foi possível ligar ao Firestore. Verifique a chave secreta. Erro: {e}")
+    print(f"ERRO: Não foi possível ligar ao Firestore. Verifique a configuração do Secret File. Erro: {e}")
     exit()
 
 # Lista de produtos a procurar (pode ser expandida)
