@@ -5,23 +5,28 @@ import json
 from datetime import datetime
 
 # --- Configuração Inicial ---
+# Vamos ler a chave diretamente do ficheiro, que é um método mais robusto no Render.
 SECRET_FILE_PATH = '/etc/secrets/serviceAccountKey.json'
 
 try:
+    # Verifica se o ficheiro da chave secreta existe
     if not os.path.exists(SECRET_FILE_PATH):
         raise FileNotFoundError(f"O ficheiro da chave secreta não foi encontrado em {SECRET_FILE_PATH}")
 
     cred = credentials.Certificate(SECRET_FILE_PATH)
     
+    # Evita inicializar a app múltiplas vezes se o script for chamado mais de uma vez
     if not firebase_admin._apps:
         firebase_admin.initialize_app(cred)
         
     db = firestore.client()
     print("Ligação ao Firestore estabelecida com sucesso.")
 except Exception as e:
-    print(f"ERRO: Não foi possível ligar ao Firestore. Erro: {e}")
+    print(f"ERRO: Não foi possível ligar ao Firestore. Verifique a configuração do Secret File. Erro: {e}")
     exit()
 
+# Lista de produtos a procurar (pode ser expandida)
+# Numa versão avançada, esta lista poderia vir da própria base de dados.
 PRODUCTS_TO_SCRAPE = [
     {"id": "p1", "search_term": "leite mimosa meio gordo"},
     {"id": "p3", "search_term": "maçã golden"},
@@ -30,6 +35,7 @@ PRODUCTS_TO_SCRAPE = [
 ]
 
 # --- Funções do Robô ---
+
 def scrape_prices(search_term):
     """ Simula a busca de preços nos supermercados. """
     print(f"A simular a procura por '{search_term}'...")
@@ -47,8 +53,7 @@ def update_product_in_db(product_id, search_term, prices_data):
     """ Cria ou atualiza um produto na base de dados Firestore. """
     try:
         product_ref = db.collection('products').document(product_id)
-        # CORREÇÃO: Usamos .set(..., merge=True) em vez de .update()
-        # Isto cria o documento se ele não existir, e atualiza-o se já existir.
+        # Usamos .set(..., merge=True) para criar ou atualizar o documento.
         product_ref.set({
             'id': product_id,
             'name': search_term.title(), # Coloca a primeira letra maiúscula
@@ -60,6 +65,7 @@ def update_product_in_db(product_id, search_term, prices_data):
         print(f"ERRO ao atualizar o produto '{product_id}': {e}")
 
 # --- Execução Principal do Robô ---
+
 def run_scraper():
     print("--- INICIANDO ROBÔ DE ATUALIZAÇÃO DE PREÇOS ---")
     
