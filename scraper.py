@@ -11,10 +11,18 @@ from datetime import datetime
 # Carrega a chave secreta para aceder à base de dados
 # Esta chave virá de um "Secret File" no Render
 try:
-    key_content = os.getenv('FIRESTORE_KEY')
+    # CORREÇÃO: O nome da variável de ambiente no Render é o nome do ficheiro, em maiúsculas.
+    key_content = os.getenv('SERVICEACCOUNTKEY_JSON')
+    if not key_content:
+        raise ValueError("A variável de ambiente 'SERVICEACCOUNTKEY_JSON' não foi encontrada.")
+    
     key_dict = json.loads(key_content)
     cred = credentials.Certificate(key_dict)
-    firebase_admin.initialize_app(cred)
+    
+    # Evita inicializar a app múltiplas vezes se o script for chamado mais de uma vez
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(cred)
+        
     db = firestore.client()
     print("Ligação ao Firestore estabelecida com sucesso.")
 except Exception as e:
@@ -88,4 +96,3 @@ def run_scraper():
 
 if __name__ == "__main__":
     run_scraper()
-  Adiciona script principal do robô
